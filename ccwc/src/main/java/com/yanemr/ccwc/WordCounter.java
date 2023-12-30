@@ -5,7 +5,6 @@ import com.yanemr.ccwc.output.OutputFormatter;
 import com.yanemr.ccwc.output.OutputFormatterFactory;
 import com.yanemr.ccwc.util.FileUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
@@ -14,19 +13,19 @@ import static picocli.CommandLine.*;
 @Command(name = "ccwc")
 public class WordCounter implements Callable<Result> {
 
-    @Option(names = {"-c", "--bytes"}, usageHelp = true)
-    boolean countBytes;
+    @Option(names = {"-c", "--bytes"})
+    private boolean countBytes;
 
-    @Option(names = {"-m", "--chars"}, usageHelp = true)
-    boolean countChars;
+    @Option(names = {"-m", "--chars"})
+    private boolean countChars;
 
-    @Option(names = {"-l", "--lines"}, usageHelp = true)
-    boolean countLines;
+    @Option(names = {"-l", "--lines"})
+    private boolean countLines;
 
-    @Option(names = {"-w", "--words"}, usageHelp = true)
-    boolean countWords;
+    @Option(names = {"-w", "--words"})
+    private boolean countWords;
 
-    @Parameters(index = "0", defaultValue = "", arity = "0..1")
+    @Parameters(index = "0", defaultValue = "", arity = "0")
     private String file;
 
     @Override
@@ -34,20 +33,22 @@ public class WordCounter implements Callable<Result> {
 
         String currentDirectory = System.getProperty("user.dir");
         byte[] bytes = null;
-        if (file.isBlank()) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buffer = new byte[32 * 1024];
+        var result = new Result(file);
 
-            int bytesRead;
-            while ((bytesRead = System.in.read(buffer)) > 0) {
-                baos.write(buffer, 0, bytesRead);
-            }
-            bytes = baos.toByteArray();
+        boolean switchAll = (countWords == countLines) && (countBytes == countLines);
+
+        if (switchAll) {
+            countWords = true;
+            countBytes = true;
+            countLines = true;
+        }
+
+        if (file.isBlank()) {
+            bytes = FileUtils.readInput();
 
         } else {
             bytes = FileUtils.readFile(Paths.get(currentDirectory, file).toString());
         }
-        var result = new Result(file);
         if (countBytes) {
             result.numberOfBytes = bytes.length;
         }
@@ -78,4 +79,6 @@ public class WordCounter implements Callable<Result> {
         System.out.println(formatter.format(result));
         return result;
     }
+
+
 }

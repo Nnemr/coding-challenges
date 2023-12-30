@@ -3,8 +3,6 @@ package com.yanemr.ccwc;
 import com.yanemr.ccwc.dto.Result;
 import picocli.CommandLine;
 
-import java.util.Arrays;
-
 public class CCWC {
 
     public static void main(String[] args) {
