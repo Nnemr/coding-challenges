@@ -1,39 +1,52 @@
 package com.yanemr.ccwc;
 
-import static picocli.CommandLine.*;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.concurrent.Callable;
-
 import com.yanemr.ccwc.dto.Result;
 import com.yanemr.ccwc.output.OutputFormatter;
 import com.yanemr.ccwc.output.OutputFormatterFactory;
 import com.yanemr.ccwc.util.FileUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.file.Paths;
+import java.util.concurrent.Callable;
+
+import static picocli.CommandLine.*;
+
 @Command(name = "ccwc")
 public class WordCounter implements Callable<Result> {
 
-    @Option(names = {"-c", "--bytes"})
+    @Option(names = {"-c", "--bytes"}, usageHelp = true)
     boolean countBytes;
 
-    @Option(names = {"-m", "--chars"})
+    @Option(names = {"-m", "--chars"}, usageHelp = true)
     boolean countChars;
 
-    @Option(names = {"-l", "--lines"})
+    @Option(names = {"-l", "--lines"}, usageHelp = true)
     boolean countLines;
 
-    @Option(names = {"-w", "--words"})
+    @Option(names = {"-w", "--words"}, usageHelp = true)
     boolean countWords;
 
-    @Parameters(index = "0")
+    @Parameters(index = "0", defaultValue = "", arity = "0..1")
     private String file;
 
     @Override
     public Result call() throws Exception {
 
         String currentDirectory = System.getProperty("user.dir");
-        var bytes = FileUtils.readFile(Paths.get(currentDirectory, file).toString());
+        byte[] bytes = null;
+        if (file.isBlank()) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[32 * 1024];
+
+            int bytesRead;
+            while ((bytesRead = System.in.read(buffer)) > 0) {
+                baos.write(buffer, 0, bytesRead);
+            }
+            bytes = baos.toByteArray();
+
+        } else {
+            bytes = FileUtils.readFile(Paths.get(currentDirectory, file).toString());
+        }
         var result = new Result(file);
         if (countBytes) {
             result.numberOfBytes = bytes.length;
@@ -55,9 +68,8 @@ public class WordCounter implements Callable<Result> {
         if (countWords) {
             result.numberOfWords = 0;
             for (int i = 1; i < bytes.length; ++i) {
-                boolean whitespace = Character.isWhitespace(bytes[i]);
-                boolean whitespace1 = Character.isWhitespace(bytes[i - 1]);
-                if (whitespace && !whitespace1) {
+                if (Character.isWhitespace(bytes[i])
+                        && !Character.isWhitespace(bytes[i - 1])) {
                     ++result.numberOfWords;
                 }
             }

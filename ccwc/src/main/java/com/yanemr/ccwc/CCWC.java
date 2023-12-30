@@ -10,7 +10,6 @@ public class CCWC {
     public static void main(String[] args) {
         WordCounter wordCounter = new WordCounter();
         var commandLine = new CommandLine(wordCounter);
-        commandLine.parseArgs(args);
         Result result = new Result();
         commandLine.setExecutionResult(result);
         commandLine.execute(args);
